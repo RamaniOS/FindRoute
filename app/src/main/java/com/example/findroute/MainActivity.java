@@ -15,7 +15,9 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -32,6 +34,12 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.json.JSONException;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
+
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -41,6 +49,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LocationRequest locationRequest;
     private LocationCallback locationCallback;
     private static final int REQUEST_CODE = 1;
+
+    private Double latitude, longitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +66,34 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         btn_distance = findViewById(R.id.btn_distance);
         btn_clear = findViewById(R.id.btn_clear);
         btn_directions = findViewById(R.id.btn_directions);
+    }
+
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.btn_rest:
+                String url = getURL(latitude, longitude, "restaurant");
+                Object[] data = new Object[2];
+                data[0] = mMap;
+                data[1] = url;
+
+                GetNearByPlace getNearByPlace = new GetNearByPlace();
+                getNearByPlace.execute(data);
+                Toast.makeText(this, "Restaurant", Toast.LENGTH_SHORT).show();
+
+                break;
+            case R.id.btn_distance: break;
+            case R.id.btn_clear: break;
+            case R.id.btn_directions: break;
+        }
+    }
+
+    private String getURL(double lat, double longi, String nearBy) {
+        StringBuilder placeURL = new StringBuilder("https://maps.googleapis.com/maps/api/place/findplacefromtext/json?");
+        placeURL.append("location="+lat+","+longi);
+        placeURL.append("&radius="+1500);
+        placeURL.append("&type="+nearBy);
+        placeURL.append("&key="+getString(R.string.google_maps_key));
+        return placeURL.toString();
     }
 
     private void initMap() {
@@ -101,6 +139,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onLocationResult(LocationResult locationResult) {
                 //super.onLocationResult(locationResult);
                 for (Location location: locationResult.getLocations()) {
+                    latitude = location.getLatitude();
+                    longitude = location.getLongitude();
                     LatLng userLocation = new LatLng(location.getLatitude(), location.getLongitude());
                     CameraPosition cameraPosition = CameraPosition.builder()
                             .target(userLocation)

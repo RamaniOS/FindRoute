@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">FindRoute</string>
-    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyApHTqJ9prb-Mi5A2jShejR9kdAYeocwsY</string>
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyCTjxDPSGjp0FP5UgCzMzm2J_RyEY-AiQI</string>
 </resources>
