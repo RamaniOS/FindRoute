@@ -55,4 +55,41 @@ public class DataParser {
         return  places;
     }
 
+    public static Distance parseDistance(String jsonData) throws JSONException {
+        JSONArray jsonArray = null;
+        JSONObject json = new JSONObject(jsonData);
+
+        jsonArray = json.getJSONArray("routes").getJSONObject(0).getJSONArray("legs");
+        Distance distanceModel = new Distance();
+        String duration, distance = "";
+
+        try {
+            duration = jsonArray.getJSONObject(0).getJSONObject("duration").getString("text");
+            distance = jsonArray.getJSONObject(0).getJSONObject("distance").getString("text");
+            distanceModel.setDistance(distance);
+            distanceModel.setDuration(duration);
+        } catch (JSONException e) {
+            e.getStackTrace();
+        }
+        return distanceModel;
+    }
+
+    public static String[] parseDirections(String jsonData) throws JSONException {
+        JSONArray jsonArray = null;
+        JSONObject json = new JSONObject(jsonData);
+
+        jsonArray = json.getJSONArray("routes").getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONArray("steps");
+
+        String[] polyLines = new String[jsonArray.length()];
+
+        for (int i=0; i<jsonArray.length(); i++) {
+            try {
+                polyLines[i] = jsonArray.getJSONObject(i).getJSONObject("polyline").getString("points");
+            } catch (JSONException e) {
+                e.getStackTrace();
+            }
+        }
+        return polyLines;
+    }
+
 }

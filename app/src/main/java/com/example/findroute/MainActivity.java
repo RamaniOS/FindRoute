@@ -9,14 +9,12 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
 import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -34,23 +32,17 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import org.json.JSONException;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Objects;
-
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
-    private Button btn_restaurants, btn_distance, btn_clear, btn_directions;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationRequest locationRequest;
     private LocationCallback locationCallback;
     private static final int REQUEST_CODE = 1;
 
-    private Double latitude, longitude;
+    private Double latitude, longitude, dest_lat, dest_lng;
+    public static boolean isDirectionRequested = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,38 +50,48 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_main);
         getUserLocation();
         initMap();
-        initViews();
-    }
-
-    private void initViews() {
-        btn_restaurants = findViewById(R.id.btn_rest);
-        btn_distance = findViewById(R.id.btn_distance);
-        btn_clear = findViewById(R.id.btn_clear);
-        btn_directions = findViewById(R.id.btn_directions);
     }
 
     public void onClick(View v) {
+        Object[] data;
         switch (v.getId()) {
             case R.id.btn_rest:
-                String url = getURL(latitude, longitude, "restaurant");
-                Object[] data = new Object[2];
+                data = new Object[2];
                 data[0] = mMap;
-                data[1] = url;
-
+                data[1] = getURL(latitude, longitude, "restaurant");
+                //
                 GetNearByPlace getNearByPlace = new GetNearByPlace();
                 getNearByPlace.execute(data);
                 Toast.makeText(this, "Restaurant", Toast.LENGTH_SHORT).show();
-
                 break;
-            case R.id.btn_distance: break;
-            case R.id.btn_clear: break;
-            case R.id.btn_directions: break;
+            case R.id.btn_distance:
+            case R.id.btn_directions:
+                data = new Object[3];
+                data[0] = mMap;
+                data[1] = getDirectionURL(latitude, longitude);
+                data[2] = new LatLng(dest_lat, dest_lng);
+                //
+                GetDirections directions = new GetDirections();
+                directions.execute(data);
+                Toast.makeText(this, "Directions", Toast.LENGTH_SHORT).show();
+                isDirectionRequested = v.getId() == R.id.btn_directions;
+                break;
+            case R.id.btn_clear:
+                break;
         }
     }
 
-    private String getURL(double lat, double longi, String nearBy) {
+    private String getDirectionURL(double lat, double lng) {
+        StringBuilder url = new StringBuilder("https://maps.googleapis.com/maps/api/directions/json?");
+        url.append("origin="+lat+","+lng);
+        url.append("&destination="+dest_lat+","+dest_lng);
+        url.append("&key="+getString(R.string.google_maps_key));
+        return url.toString();
+    }
+
+    private String getURL(double lat, double lng, String nearBy) {
         StringBuilder placeURL = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
-        placeURL.append("location="+lat+","+longi);
+        placeURL.append("location="+lat+","+lng);
         placeURL.append("&radius="+1500);
         placeURL.append("&type="+nearBy);
         placeURL.append("&key="+getString(R.string.google_maps_key));
@@ -106,10 +108,27 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                dest_lat = latLng.latitude;
+                dest_lng =latLng.longitude;
+                setMarker(latLng);
+            }
+        });
         if(!checkPermission())
             requestPermission();
         else
           fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
+    }
+
+    private void setMarker(LatLng location) {
+        MarkerOptions markerOptions = new MarkerOptions().position(location)
+                .title("Your Destination")
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                .draggable(true);
+        mMap.addMarker(markerOptions);
     }
 
     private void getUserLocation() {
