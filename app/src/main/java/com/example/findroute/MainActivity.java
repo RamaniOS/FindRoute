@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private String getURL(double lat, double longi, String nearBy) {
-        StringBuilder placeURL = new StringBuilder("https://maps.googleapis.com/maps/api/place/findplacefromtext/json?");
+        StringBuilder placeURL = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
         placeURL.append("location="+lat+","+longi);
         placeURL.append("&radius="+1500);
         placeURL.append("&type="+nearBy);
